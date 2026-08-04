@@ -1,5 +1,4 @@
 import { BrowserWindow } from 'electron'
-import { ByeDPI } from './ByeDPI'
 import { MODULES_DIR } from '../../constants'
 import { Xray } from './Xray'
 import { YoutubeProxyConnection } from './YoutubeProxyConnection'
@@ -11,17 +10,14 @@ type Connection<K extends keyof YoutubeProxyConnection> = { start: (cn: YoutubeP
 export class YoutubeProxy {
   private connection: Connection<keyof YoutubeProxyConnection> | null = null
   private methods: { [key in keyof YoutubeProxyConnection]?: new () => Connection<key> } = {
-    byeDPI: ByeDPI,
     xray: Xray
   } as const
   constructor(private window: BrowserWindow) {}
   async set<K extends keyof YoutubeProxyConnection>(connection: YoutubeProxyConnection[K]) {
-    await this.window.webContents.session.setProxy({})
-    this.connection?.stop()
-    this.connection = null
+    await this.stop()
     if (connection.method === 'direct') return
     if (connection.method in this.methods) {
-      const cn = new this.methods[connection.method as K]
+      const cn = new this.methods[connection.method as K]!
       await cn.start(connection)
       this.connection = cn
     }
@@ -34,7 +30,11 @@ export class YoutubeProxy {
       ).toString('base64')
     })
   }
-  stop() {
+  async stop() {
+    if (!this.window.isDestroyed()) {
+      await this.window.webContents.session.setProxy({})
+    }
     this.connection?.stop()
+    this.connection = null
   }
 }

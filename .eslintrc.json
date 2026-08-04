@@ -1,4 +1,6 @@
 {
+  "root": true,
+  "ignorePatterns": ["out/"],
   "env": {
     "browser": true,
     "es6": true,
@@ -12,8 +14,19 @@
     "plugin:import/electron",
     "plugin:import/typescript"
   ],
+  "parser": "@typescript-eslint/parser",
   "rules": {
-    "@typescript-eslint/no-non-null-assertion": "off"
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "import/no-named-as-default-member": "off",
+    "import/no-named-as-default": "off",
+    "import/no-unresolved": "off"
   },
-  "parser": "@typescript-eslint/parser"
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["."]
+      }
+    }
+  }
 }

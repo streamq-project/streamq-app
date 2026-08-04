@@ -1,22 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "lib": ["DOM", "ES6", "DOM.Iterable", "ScriptHost", "ES2016.Array.Include"],
-    "jsx": "react-jsx",
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "ES2022", "DOM"],
+    "ignoreDeprecations": "5.0",
     "allowJs": true,
-    "module": "commonjs",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "noImplicitAny": true,
     "sourceMap": true,
-    "baseUrl": ".",
     "outDir": "dist",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "paths": {
-      "*": ["node_modules/*"],
-      "@napi/*": ["./napi/*"]
-    }
+    "strictNullChecks": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src/**/*.d.ts", "src/**/*.ts", "src/**/*.tsx"],
 }

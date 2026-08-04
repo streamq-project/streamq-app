@@ -4,18 +4,22 @@ import { app } from 'electron'
 import { z } from 'zod'
 import yaml from 'yaml'
 import path from 'path'
+import type { AppSettings } from '../shared/ipc-types'
 
-const schema = z.object({
+const schema: z.ZodType<AppSettings> = z.object({
   language: z.enum(['en', 'ru']).nullable().default(null),
-  systemMediaControlsSession: z.boolean().default(true)
+  systemMediaControlsSession: z.boolean().default(true),
+  extractThumbnails: z.boolean().default(true),
+  allowCrashReports: z.boolean().default(true),
+  acrylic: z.boolean().default(true)
 })
 
 class Settings {
-  private adapter = new DataFileSync<typeof schema._type>(path.join(app.getPath('userData'), 'settings.yml'), {
-    parse: str => schema.safeParse(yaml.parse(str)).data,
+  private adapter = new DataFileSync<z.infer<typeof schema>>(path.join(app.getPath('userData'), 'settings.yml'), {
+    parse: str => schema.safeParse(yaml.parse(str)).data!,
     stringify: yaml.stringify
   })
-  private db = new LowSync(this.adapter, schema.safeParse({}).data)
+  private db = new LowSync(this.adapter, schema.safeParse({}).data!)
   constructor() {
     this.db.read()
   }
@@ -28,7 +32,7 @@ class Settings {
   get write() {
     return this.db.write
   }
-  set<T extends keyof typeof schema._type>(key: T, value: typeof schema._type[T]) {
+  set<T extends keyof AppSettings>(key: T, value: AppSettings[T]) {
     this.db.update(data => { data[key] = value })
     this.db.write()
   }

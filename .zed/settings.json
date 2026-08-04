@@ -1,0 +1,21 @@
+{
+  "languages": {
+    "Rust": {
+      "preferred_line_length": 160,
+    },
+  },
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "procMacro": {
+          "ignored": {
+            "napi-derive": ["napi"],
+          },
+        },
+        "diagnostics": {
+          "disabled": ["proc-macro-disabled"],
+        },
+      },
+    },
+  },
+}

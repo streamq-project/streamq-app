@@ -1,8 +1,25 @@
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Dependencies
 node_modules/
-.eslintcache
-.yarn-integrity
-.webpack/
+.pnpm-store/
+
+# Build / tooling output
+.vite/
 out/
+native/target/
+native/dist/
+
+# Caches / local env
+*.tsbuildinfo
+.eslintcache
+.env
+.env.test
+config.local.yml
+
+# Agent-driven workflow
+.rules
+.agents
+.codegraph
+
+# Syncthing
+.stfolder/
+*.sync-conflict-*

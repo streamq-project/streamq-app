@@ -1,0 +1,30 @@
+{
+  "profiles": {
+    "StreamQ: Linux": {
+      "settings": {
+        "lsp": {
+          "rust-analyzer": {
+            "initialization_options": {
+              "cargo": {
+                "target": "x86_64-unknown-linux-gnu",
+              },
+            },
+          },
+        },
+      },
+    },
+    "StreamQ: Windows": {
+      "settings": {
+        "lsp": {
+          "rust-analyzer": {
+            "initialization_options": {
+              "cargo": {
+                "target": "x86_64-pc-windows-msvc",
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+}

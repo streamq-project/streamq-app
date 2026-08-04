@@ -1,6 +1,0 @@
-node_modules
-target
-Cargo.lock
-index.d.ts
-index.js
-*.node

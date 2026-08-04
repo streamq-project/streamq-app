@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next'
 import en from './locales/en.yml'
 import ru from './locales/ru.yml'
 
-const config = window.appAPI.init()
+const config = window.appAPI.bootstrap.init()
 
 const SUPPORTED_LANGUAGES = ['en', 'ru'] as const
 

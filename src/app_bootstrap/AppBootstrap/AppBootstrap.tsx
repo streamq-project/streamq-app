@@ -3,17 +3,20 @@ import ReactDOM from 'react-dom/client'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '../icons/Logo'
 
-import st from './AppBootstrap.sass'
+import st from './AppBootstrap.module.sass'
 
 const AppBootstrap: FC = () => {
   const [status, setStatus] = useState<string | null>('checking-for-update')
   const [progress, setProgress] = useState<string | null>(null)
   const { t } = useTranslation()
   useEffect(() => {
-    window.appAPI.on('status', setStatus)
-    window.appAPI.on('progress', setProgress)
-    window.appAPI.on('nowPlayingChanged', console.log)
-    window.appAPI.ready()
+    const unsubStatus = window.appAPI.bootstrap.onStatus(setStatus)
+    const unsubProgress = window.appAPI.bootstrap.onProgress((p) => setProgress(String(p)))
+    window.appAPI.bootstrap.ready()
+    return () => {
+      unsubStatus()
+      unsubProgress()
+    }
   }, [])
   return <div className={st.bootstrap}>
     <div className={st.header}>

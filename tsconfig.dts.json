@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/preload/**/*",
+    "src/shared/**/*",
+    "src/main/**/*",
+    "native/dist/**/*.d.ts",
+    "forge.env.d.ts"
+  ]
+}

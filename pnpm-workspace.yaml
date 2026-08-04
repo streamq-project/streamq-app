@@ -1,0 +1,12 @@
+packages:
+  - '.'
+nodeLinker: hoisted
+blockExoticSubdeps: false
+allowBuilds:
+  electron: true
+  esbuild: true
+  '@parcel/watcher': true
+  sass-embedded: true
+  app-builder-bin: true
+  electron-winstaller: true
+minimumReleaseAge: 10080
