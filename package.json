@@ -1,7 +1,7 @@
 {
   "name": "streamq",
   "productName": "StreamQ",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "StreamQ - https://streamq.io",
   "main": ".vite/build/main.js",
   "license": "SEE LICENSE IN LICENSE.md",
