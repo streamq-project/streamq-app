@@ -2,26 +2,21 @@ use futures::executor::block_on;
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
 use tracing::{debug, info, instrument};
-use windows::Media::Control::GlobalSystemMediaTransportControlsSessionPlaybackStatus;
+use windows::Media::Control::{GlobalSystemMediaTransportControlsSessionManager, GlobalSystemMediaTransportControlsSessionPlaybackStatus};
 use windows::Storage::Streams::{DataReader, IRandomAccessStreamReference};
 
 use crate::error::NativeError;
 use crate::models::media::{AppMediaSession, SharedState, now_ms};
 use crate::thumbnails::Thumbnails;
 
-#[instrument(skip(state, audio_manager))]
+#[instrument(skip(manager, state, audio_manager))]
 pub fn handle_playback_update(
+    manager: &GlobalSystemMediaTransportControlsSessionManager,
     state: &SharedState,
     is_dev: bool,
     extract_thumbnails: bool,
     audio_manager: &super::audio_sessions::WindowsAudioSessionManager,
 ) -> Result<(), NativeError> {
-    let manager: windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager = block_on(
-        windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager::RequestAsync()
-            .map_err(|e| NativeError::MediaSession(format!("Failed to create async operation: {}", e)))?,
-    )
-    .map_err(|e| NativeError::MediaSession(format!("Failed to request session manager: {}", e)))?;
-
     let sessions = manager
         .GetSessions()
         .map_err(|e| NativeError::MediaSession(format!("Failed to get sessions: {}", e)))?;
@@ -137,20 +132,15 @@ pub fn handle_playback_update(
     Ok(())
 }
 
-#[instrument(skip(state, audio_manager))]
+#[instrument(skip(manager, state, audio_manager))]
 pub fn pause(
+    manager: &GlobalSystemMediaTransportControlsSessionManager,
     apps: Vec<String>,
     state: &SharedState,
     is_dev: bool,
     extract_thumbnails: bool,
     audio_manager: &super::audio_sessions::WindowsAudioSessionManager,
 ) -> Result<Vec<AppMediaSession>, NativeError> {
-    let manager: windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager = block_on(
-        windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager::RequestAsync()
-            .map_err(|e| NativeError::MediaSession(format!("Failed to create async operation: {}", e)))?,
-    )
-    .map_err(|e| NativeError::MediaSession(format!("Failed to request session manager: {}", e)))?;
-
     let sessions = manager
         .GetSessions()
         .map_err(|e| NativeError::MediaSession(format!("Failed to get sessions: {}", e)))?;
@@ -247,25 +237,20 @@ pub fn pause(
     }
     drop(suppressed);
 
-    handle_playback_update(state, is_dev, extract_thumbnails, audio_manager)?;
+    handle_playback_update(manager, state, is_dev, extract_thumbnails, audio_manager)?;
 
     Ok(paused_sessions)
 }
 
-#[instrument(skip(state, audio_manager))]
+#[instrument(skip(manager, state, audio_manager))]
 pub fn resume(
+    manager: &GlobalSystemMediaTransportControlsSessionManager,
     apps: Vec<String>,
     state: &SharedState,
     is_dev: bool,
     extract_thumbnails: bool,
     audio_manager: &super::audio_sessions::WindowsAudioSessionManager,
 ) -> Result<(), NativeError> {
-    let manager: windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager = block_on(
-        windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager::RequestAsync()
-            .map_err(|e| NativeError::MediaSession(format!("Failed to create async operation: {}", e)))?,
-    )
-    .map_err(|e| NativeError::MediaSession(format!("Failed to request session manager: {}", e)))?;
-
     let sessions = manager
         .GetSessions()
         .map_err(|e| NativeError::MediaSession(format!("Failed to get sessions: {}", e)))?;
@@ -302,12 +287,13 @@ pub fn resume(
         }
     }
 
-    handle_playback_update(state, is_dev, extract_thumbnails, audio_manager)?;
+    handle_playback_update(manager, state, is_dev, extract_thumbnails, audio_manager)?;
     Ok(())
 }
 
-#[instrument(skip(_state, audio_manager))]
+#[instrument(skip(manager, _state, audio_manager))]
 pub fn set_volume(
+    manager: &GlobalSystemMediaTransportControlsSessionManager,
     app: String,
     volume: f64,
     _state: &SharedState,
@@ -316,12 +302,6 @@ pub fn set_volume(
     if !(0.0..=1.0).contains(&volume) {
         return Err(NativeError::InvalidVolume(volume));
     }
-
-    let manager: windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager = block_on(
-        windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager::RequestAsync()
-            .map_err(|e| NativeError::MediaSession(format!("Failed to create async operation: {}", e)))?,
-    )
-    .map_err(|e| NativeError::MediaSession(format!("Failed to request session manager: {}", e)))?;
 
     let sessions = manager
         .GetSessions()

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::thread;
 
-use tracing::{info, instrument, warn};
+use tracing::{info, instrument};
 
 use crate::config::Config;
 use crate::error::NativeError;
@@ -9,24 +9,28 @@ use crate::models::media::{AppMediaSession, AudioSource, MediaResponse, MediaSes
 
 use super::audio;
 
-use super::media_session_control;
-use super::media_session_events::AudioSessionEventsManager;
-use super::media_session_events::start_media_transport_listener;
+use super::media_session_events::{AudioSessionEventsManager, MediaTransportHandle, start_media_transport_worker};
 
 pub struct MediaSessionManager {
     is_dev: bool,
     extract_thumbnails: bool,
     state: SharedState,
-    audio_manager: Arc<super::audio_sessions::WindowsAudioSessionManager>,
+    media_transport: MediaTransportHandle,
 }
 
 impl MediaSessionManager {
     pub fn new(config: Config, event_emitter: Arc<crate::event_emitter::EventEmitter>) -> Self {
+        let is_dev = config.debug;
+        let extract_thumbnails = config.extract_thumbnails.unwrap_or(true);
+        let state = Arc::new(MediaSessionState::new(event_emitter));
+        let audio_manager = Arc::new(super::audio_sessions::WindowsAudioSessionManager::new());
+        let media_transport = start_media_transport_worker(state.clone(), is_dev, extract_thumbnails, audio_manager.clone());
+
         let manager = Self {
-            is_dev: config.debug,
-            extract_thumbnails: config.extract_thumbnails.unwrap_or(true),
-            state: Arc::new(MediaSessionState::new(event_emitter)),
-            audio_manager: Arc::new(super::audio_sessions::WindowsAudioSessionManager::new()),
+            is_dev,
+            extract_thumbnails,
+            state,
+            media_transport,
         };
 
         manager.initialize();
@@ -41,26 +45,20 @@ impl MediaSessionManager {
             "Windows media session manager initializing"
         );
 
-        let initial_volume = audio::get_system_volume();
-        *self.state.system_volume.lock().unwrap() = initial_volume;
-        tracing::info!("initialize: Initial system volume = {}", initial_volume);
+        let state_for_initial_volume = self.state.clone();
+        thread::spawn(move || {
+            let initial_volume = audio::get_system_volume();
+            *state_for_initial_volume.system_volume.lock().unwrap() = initial_volume;
+            tracing::info!("initialize: Initial system volume = {}", initial_volume);
+        });
 
         audio::start_volume_listener(self.state.clone());
         audio::start_app_source_watcher(self.state.clone());
 
-        if let Err(e) = media_session_control::handle_playback_update(&self.state, self.is_dev, self.extract_thumbnails, &self.audio_manager) {
-            warn!(error = %e, "Failed to collect initial media sessions");
-        }
-
-        let state_for_audio_events = self.state.clone();
-        let is_dev = self.is_dev;
-        let extract_thumbnails = self.extract_thumbnails;
-        let audio_manager = self.audio_manager.clone();
+        let media_transport = self.media_transport.clone();
         thread::spawn(move || {
-            AudioSessionEventsManager::new(state_for_audio_events, is_dev, extract_thumbnails, audio_manager).run();
+            AudioSessionEventsManager::new(media_transport).run();
         });
-
-        start_media_transport_listener(self.state.clone(), self.is_dev, self.extract_thumbnails, self.audio_manager.clone());
     }
 
     #[instrument(skip(self))]
@@ -113,16 +111,16 @@ impl MediaSessionManager {
     }
 
     pub fn pause(&self, apps: Vec<String>) -> Result<Vec<AppMediaSession>, NativeError> {
-        media_session_control::pause(apps, &self.state, self.is_dev, self.extract_thumbnails, &self.audio_manager)
+        self.media_transport.pause(apps)
     }
 
     #[instrument(skip(self))]
     pub fn resume(&self, apps: Vec<String>) -> Result<(), NativeError> {
-        media_session_control::resume(apps, &self.state, self.is_dev, self.extract_thumbnails, &self.audio_manager)
+        self.media_transport.resume(apps)
     }
 
     #[instrument(skip(self))]
     pub fn set_volume(&self, app: String, volume: f64) -> Result<(), NativeError> {
-        media_session_control::set_volume(app, volume, &self.state, &self.audio_manager)
+        self.media_transport.set_volume(app, volume)
     }
 }
