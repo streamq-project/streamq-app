@@ -28,7 +28,7 @@ export class AcrylicBrowserWindow extends BaseBrowserWindow {
       const frameTime = () => 1000 / screen.getDisplayMatching(this.getBounds()).displayFrequency
       this.on('will-move', () => native.sleep(frameTime()))
       this.on('will-resize', (e) => {
-        if (this.lastResize >= Date.now() - frameTime()) e.preventDefault()
+        if (this.lastResize >= Date.now() - frameTime() * 2) e.preventDefault()
         else this.lastResize = Date.now()
       })
     }
