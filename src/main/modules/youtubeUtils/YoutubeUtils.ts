@@ -34,34 +34,59 @@ export class YoutubeUtils {
       if (!player || !video) return null
 
       const clamp = (x: number) => Math.max(0, Math.min(1, x))
-      const key = player.getVideoData?.()?.video_id || video.currentSrc || video.src || 'unknown'
+      const getKey = () =>
+        player.getVideoData?.()?.video_id || video.currentSrc || video.src || 'unknown'
+      const key = getKey()
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'volume')!
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const win = window as any
-      const state = win.__streamqGainState
-      let gain: number | null = Math.max(0, Math.min(4,
-        state?.key === key && Number.isFinite(state.gain) && state.gain
-          ? state.gain
-          : (player.getVolume() > 0 ? video.volume / (player.getVolume() / 100) : null)
-      ))
+      const states: WeakMap<HTMLVideoElement, { key: string; gain: number | null }> =
+        win.__streamqVolumeStates ??= new WeakMap()
+      const state = states.get(video) ?? { key, gain: null }
 
-      if (!gain && vol > 0) {
-        player.setVolume(1)
-        gain = (video.volume / 0.01) || null
-        if (!gain) {
-          const apiTarget = Math.round(vol * 100)
-          player.setVolume(apiTarget)
-          return { inputVol: vol, gain, apiTarget, resultInVideo: video.volume, videoKey: key }
-        }
+      if (!states.has(video)) {
+        Object.defineProperty(video, 'volume', {
+          configurable: true,
+          enumerable: descriptor.enumerable,
+          get: descriptor.get,
+          set(value: number) {
+            const currentKey = getKey()
+            if (state.key !== currentKey) {
+              state.key = currentKey
+              state.gain = null
+            }
+            if (state.gain === null) descriptor.set!.call(video, value)
+          }
+        })
+        states.set(video, state)
       }
 
-      win.__streamqGainState = { key, gain }
+      if (state.key !== key) {
+        state.key = key
+        state.gain = null
+      }
+
+      if (state.gain === null && vol > 0) {
+        player.setVolume(1)
+        const measuredGain = video.volume / 0.01
+        if (Number.isFinite(measuredGain) && measuredGain > 0)
+          state.gain = Math.min(1, measuredGain)
+      }
+
+      const gain = state.gain
+      if (gain === null) {
+        const apiTarget = vol > 0 ? Math.max(1, Math.round(vol * 100)) : 0
+        player.setVolume(apiTarget)
+        if (vol === 0) descriptor.set!.call(video, 0)
+        return { inputVol: vol, gain, apiTarget, resultInVideo: video.volume, videoKey: key }
+      }
 
       const desired = clamp(vol * gain)
       const apiTarget = Math.round(desired * 100)
 
       player.setVolume(apiTarget)
-      video.volume = clamp(apiTarget === 0 && desired > 0 ? desired : Math.min(desired, apiTarget / 100))
+      descriptor.set!.call(video, desired)
 
       return { inputVol: vol, gain, desiredFinal: desired, apiTarget, resultInVideo: video.volume, videoKey: key }
     }, safeVol)
