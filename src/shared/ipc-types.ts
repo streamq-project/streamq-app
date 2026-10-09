@@ -2,7 +2,7 @@ import type { YoutubeProxyConnection } from '../main/modules/youtubeProxy/Youtub
 import type { MediaSessionData, MprisPlaybackState } from '../main/modules/mediaSession/MediaSessionManager'
 import type { LoadingStatus } from '../main/modules/appUpdater/AppUpdater'
 import type { MediaResponse, AppMediaSession, MediaActionPayload, Keybind, AudioSource } from '../main/napi'
-import type { VideoAspectRatio, VideoVolumeState } from '../main/modules/youtubeUtils/YoutubeUtils'
+import type { VideoAspectRatio, VideoStatus, VideoVolumeState } from '../main/modules/youtubeUtils/YoutubeUtils'
 import type { SimplifyDeep } from 'type-fest'
 
 export type AppLanguage = 'en' | 'ru' | null
@@ -62,6 +62,7 @@ export interface IpcInvokes {
   'youtube:setVideoVolume': (vol: number) => VideoVolumeState
   'youtube:getAspectRatio': () => VideoAspectRatio
   'youtube:setYoutubePiPMode': (isActive: boolean, isOnTop: boolean) => void
+  'youtube:getErrorCode': () => VideoStatus
   'youtube:setYoutubePiPAlwaysOnTopMode': (isOnTop: boolean) => void
 
   'proxy:setYoutubeConnectionMethod': (connection: YoutubeProxyConnection[keyof YoutubeProxyConnection]) => void

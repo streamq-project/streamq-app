@@ -1,6 +1,6 @@
 import { WebContents, WebFrameMain } from 'electron'
 import { BaseFrameManager } from '../../utils/BaseFrameManager'
-import { YoutubeUtils, VideoVolumeState } from './YoutubeUtils'
+import { YoutubeUtils, VideoVolumeState, VideoStatus } from './YoutubeUtils'
 
 export class YoutubeManager extends BaseFrameManager<YoutubeUtils> {
   constructor(wc: WebContents) {
@@ -39,6 +39,15 @@ export class YoutubeManager extends BaseFrameManager<YoutubeUtils> {
     for (const controller of this.controllers.values()) {
       await controller.setPiPMode(isActive, isOnTop)
     }
+  }
+
+  async getErrorCode(): Promise<VideoStatus> {
+    const promises = Array.from(this.controllers.values()).map(controller =>
+      controller.getErrorCode()
+    )
+    const results = await Promise.allSettled(promises)
+    const firstSuccess = results.find(r => r.status === 'fulfilled' && r.value !== null)
+    return firstSuccess?.status === 'fulfilled' ? firstSuccess.value : null
   }
 
   setPiPAlwaysOnTopMode(isOnTop: boolean): void {

@@ -32,6 +32,7 @@ const api = {
     setVideoVolume: createInvoker('youtube:setVideoVolume'),
     getAspectRatio: createInvoker('youtube:getAspectRatio'),
     setYoutubePiPMode: createInvoker('youtube:setYoutubePiPMode'),
+    getErrorCode: createInvoker('youtube:getErrorCode'),
     setYoutubePiPAlwaysOnTopMode: createInvoker('youtube:setYoutubePiPAlwaysOnTopMode')
   },
   proxy: {

@@ -12,6 +12,7 @@ export class YoutubeIpcController extends BaseIpcController {
     this.defineInvoke('youtube:setVideoVolume', (_, vol) => this.youtubeUtils.setVideoVolume(vol))
     this.defineInvoke('youtube:getAspectRatio', () => this.youtubeUtils.getAspectRatio())
     this.defineInvoke('youtube:setYoutubePiPMode', (_, isActive, isOnTop) => this.youtubeUtils.setPiPMode(isActive, isOnTop))
+    this.defineInvoke('youtube:getErrorCode', () => this.youtubeUtils.getErrorCode())
     this.defineInvoke('youtube:setYoutubePiPAlwaysOnTopMode', (_, isOnTop) => this.youtubeUtils.setPiPAlwaysOnTopMode(isOnTop))
   }
 }

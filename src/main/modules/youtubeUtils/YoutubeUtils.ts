@@ -13,6 +13,11 @@ export type VideoVolumeState = {
   desiredFinal?: number
 } | null
 
+export type VideoStatus = {
+  errorCode: string | null
+  isPlayable: boolean
+} | null
+
 export class YoutubeUtils {
   constructor(private frame: WebFrameMain) {}
 
@@ -90,6 +95,15 @@ export class YoutubeUtils {
 
       return { inputVol: vol, gain, desiredFinal: desired, apiTarget, resultInVideo: video.volume, videoKey: key }
     }, safeVol)
+  }
+
+  getErrorCode(): Promise<VideoStatus> {
+    return executeInFrame(this.frame, () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const player = document.querySelector<any>('#movie_player, .html5-video-player')
+      const videoData = player?.getVideoData()
+      return videoData ? { errorCode: videoData.errorCode, isPlayable: videoData.isPlayable } : null
+    })
   }
 
   async setPiPMode(isActive: boolean, isOnTop: boolean) {
