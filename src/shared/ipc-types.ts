@@ -83,7 +83,7 @@ export interface IpcInvokes {
 }
 
 export interface IpcEvents {
-  'app:auth': (code: string) => void
+  'app:auth': (event: { platform: string, code: string }) => void
   'bootstrap:status': (status: LoadingStatus) => void
   'bootstrap:progress': (progress: number) => void
   'window:updateIsMaximized': (isMaximized: boolean) => void

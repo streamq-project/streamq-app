@@ -28,8 +28,12 @@ export class MainWindow {
 
   private ipcControllers: BaseIpcController[] = []
 
-  instanceEvents: Record<string, (args: Record<string, string>) => void> = {
-    auth: ({ code }: { code: string }) => this.window.webContents.send('app:auth', code)
+  instanceEvents: Record<string, (url: URL) => void> = {
+    auth: (url: URL) => {
+      const platform = url.pathname.replace(/^\//, '')
+      const code = url.searchParams.get('code') || ''
+      this.window.webContents.send('app:auth', { platform, code })
+    }
   }
 
   constructor(hooks: MainWindowHooks) {
@@ -90,9 +94,8 @@ export class MainWindow {
       const lastArg = argv.at(-1)
       if (lastArg?.startsWith('streamq://')) {
         const url = new URL(lastArg)
-        const params = Object.fromEntries([...url.searchParams.entries()])
-        this.log.info(`[second-instance] hostname: ${url.hostname} | params: ${{ ...params, ...params.code ? { code: '[hidden]' } : {} }}`)
-        this.instanceEvents[url.hostname as keyof typeof this.instanceEvents]?.(params)
+        this.log.info(`[second-instance] url: ${url.protocol}//${url.host}${url.pathname} | code: ${url.searchParams.get('code') ? '[hidden]' : 'n/a'}`)
+        this.instanceEvents[url.hostname]?.(url)
       }
     })
 
